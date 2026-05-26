@@ -18,7 +18,7 @@ An indicator dedicated exclusively to finding high-volume Order Blocks.
 
 ## How to Use
 1. Open [TradingView](https://www.tradingview.com/).
-2. Open the Pine Editor at the bottom of the chart.
+2. Open the Pine Editor at the bottom of chart.
 3. Copy the code from the desired file in this repository and paste it into the editor.
 4. Click "Add to Chart" or "Save".
 5. Customize the settings (such as colors, filters, and lookback periods) via the indicator settings menu.
