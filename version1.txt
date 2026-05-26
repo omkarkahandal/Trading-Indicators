@@ -1,0 +1,60 @@
+//@version=6
+strategy("Omkar's Clear BUY SELL Strategy [SMC + Astro] FIXED", shorttitle="ClrBuySell", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=2, commission_value=0.04)
+
+lookback = input.int(12, "Lookback Period", minval=5, group="Settings")
+rrRatio = input.float(2.5, "Risk:Reward", minval=1.5, group="Risk Management")
+showOnlyStrong = input.bool(true, "Show Only Strong Signals", group="Filter")
+
+swingLow = ta.pivotlow(low, lookback, lookback)
+swingHigh = ta.pivothigh(high, lookback, lookback)
+bool hasSwingLow = not na(swingLow)
+bool hasSwingHigh = not na(swingHigh)
+
+candleRange = high - low
+avgRange = ta.sma(candleRange, 20)
+crtBull = candleRange > avgRange * 1.65 and close > open
+crtBear = candleRange > avgRange * 1.65 and close < open
+
+cycle1 = math.sin(2 * math.pi * (time / 86400000 / 27.3))
+cycle2 = math.sin(2 * math.pi * (time / 86400000 / 29.53))
+cycle3 = math.sin(2 * math.pi * (time / 86400000 / 88))
+cycle4 = math.sin(2 * math.pi * (time / 86400000 / 225))
+
+astroScore = (cycle1 + cycle2 + cycle3 + cycle4) * 25
+moonPhase = (time % (86400000 * 29.53)) / (86400000 * 29.53) * 100
+
+strongBull = astroScore > 48 and moonPhase > 52
+strongBear = astroScore < -48 and moonPhase < 48
+
+buySignal = crtBull and strongBull and (not showOnlyStrong or hasSwingLow)
+sellSignal = crtBear and strongBear and (not showOnlyStrong or hasSwingHigh)
+
+bgcolor(buySignal ? color.new(color.green, 85) : (sellSignal ? color.new(color.red, 85) : na))
+
+var float longSL = na
+var float shortSL = na
+
+if buySignal and strategy.position_size == 0
+    longSL := hasSwingLow ? swingLow : low
+    strategy.entry("BUY", strategy.long)
+
+if sellSignal and strategy.position_size == 0
+    shortSL := hasSwingHigh ? swingHigh : high
+    strategy.entry("SELL", strategy.short)
+
+if strategy.position_size > 0
+    longTP = strategy.position_avg_price + (strategy.position_avg_price - longSL) * rrRatio
+    strategy.exit("Exit Buy", "BUY", stop=longSL, limit=longTP)
+
+if strategy.position_size < 0
+    shortTP = strategy.position_avg_price - (shortSL - strategy.position_avg_price) * rrRatio
+    strategy.exit("Exit Sell", "SELL", stop=shortSL, limit=shortTP)
+
+plotshape(buySignal, title="BUY SIGNAL", location=location.belowbar, color=color.lime, style=shape.labelup, size=size.large, text="BUY", textcolor=color.black)
+plotshape(sellSignal, title="SELL SIGNAL", location=location.abovebar, color=color.red, style=shape.labeldown, size=size.large, text="SELL", textcolor=color.white)
+
+plot(hasSwingLow ? swingLow : na, "Swing Low", color=color.green, style=plot.style_linebr, linewidth=2)
+plot(hasSwingHigh ? swingHigh : na, "Swing High", color=color.red, style=plot.style_linebr, linewidth=2)
+
+alertcondition(buySignal, "🚀 BUY SIGNAL", "Strong BUY Signal - Order Block + CRT + Astro Confluence")
+alertcondition(sellSignal, "🔻 SELL SIGNAL", "Strong SELL Signal - Order Block + CRT + Astro Confluence")
