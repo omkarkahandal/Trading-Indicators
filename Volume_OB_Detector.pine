@@ -1,0 +1,120 @@
+//@version=6
+indicator("Volume-Based OB Detector", "Vol OB Detector", overlay=true, max_boxes_count=500)
+
+// ==========================================
+// --- OB DETECTOR INPUTS ---
+// ==========================================
+g_general = "General Settings"
+showBullishOB = input.bool(true, title="Show Bullish Order Blocks", group=g_general)
+showBearishOB = input.bool(true, title="Show Bearish Order Blocks", group=g_general)
+useBody = input.bool(true, title="Use Candle Body for OB Zone", tooltip="If checked, the order block zone is the candle's body. If unchecked, it's the full wick-to-wick range.", group=g_general)
+
+g_filters = "Confirmation Filters (Optional)"
+useVolumeFilter = input.bool(false, title="Enable Volume Filter", tooltip="If enabled, an OB is only valid if the confirmation candle has above-average volume.", group=g_filters)
+volumeLookback = input.int(20, title="Volume Lookback", minval=1, group=g_filters)
+useImbalanceFilter = input.bool(false, title="Enable Imbalance (FVG) Filter", tooltip="If enabled, an OB is only valid if the confirmation candle creates a Fair Value Gap.", group=g_filters)
+
+g_visual = "Visual Settings"
+bullishOBColor = input.color(color.new(color.blue, 80), title="Bullish OB Color", group=g_visual)
+bearishOBColor = input.color(color.new(color.purple, 80), title="Bearish OB Color", group=g_visual)
+textColor = input.color(color.white, title="Text Color", group=g_visual)
+
+// ==========================================
+// --- HELPER FUNCTION: FORMAT VOLUME ---
+// ==========================================
+format_volume(float vol) =>
+    string result = ""
+    if vol >= 1000000000
+        result := str.tostring(vol / 1000000000, "#.#") + "B"
+    else if vol >= 1000000
+        result := str.tostring(vol / 1000000, "#.#") + "M"
+    else if vol >= 1000
+        result := str.tostring(vol / 1000, "#.#") + "K"
+    else
+        result := str.tostring(vol, "#")
+    result
+
+// ==========================================
+// --- OB DETECTOR LOGIC ---
+// ==========================================
+var array<box> bullishOBs = array.new<box>()
+var array<box> bearishOBs = array.new<box>()
+
+// Filter Calculations
+float avgVolume = ta.sma(volume, volumeLookback)
+bool isHighVolume = volume > avgVolume or not useVolumeFilter
+
+// Bullish Order Block Logic
+bool isPotentialBullishOB = close[1] < open[1]
+bool hasBullishBOS = high > high[1]
+bool hasBullishImbalance = low > high[2] or not useImbalanceFilter
+
+if isPotentialBullishOB and hasBullishBOS and isHighVolume and hasBullishImbalance and showBullishOB
+    float ob_top = useBody ? open[1] : high[1]
+    float ob_bottom = useBody ? close[1] : low[1]
+    
+    // Format the volume of the OB candle (candle [1])
+    string volText = "OB+ " + format_volume(volume[1])
+    
+    box ob = box.new(
+         left=bar_index[1], 
+         top=ob_top, 
+         right=bar_index, 
+         bottom=ob_bottom, 
+         bgcolor=bullishOBColor, 
+         border_color=color.new(color.blue, 40), 
+         text=volText, 
+         text_color=textColor, 
+         text_size=size.tiny,
+         text_halign=text.align_center,
+         text_valign=text.align_center,
+         extend=extend.right
+         )
+    array.push(bullishOBs, ob)
+
+// Bearish Order Block Logic
+bool isPotentialBearishOB = close[1] > open[1]
+bool hasBearishBOS = low < low[1]
+bool hasBearishImbalance = high < low[2] or not useImbalanceFilter
+
+if isPotentialBearishOB and hasBearishBOS and isHighVolume and hasBearishImbalance and showBearishOB
+    float ob_top = useBody ? close[1] : high[1]
+    float ob_bottom = useBody ? open[1] : low[1]
+    
+    // Format the volume of the OB candle (candle [1])
+    string volText = "OB- " + format_volume(volume[1])
+    
+    box ob = box.new(
+         left=bar_index[1], 
+         top=ob_top, 
+         right=bar_index, 
+         bottom=ob_bottom, 
+         bgcolor=bearishOBColor, 
+         border_color=color.new(color.purple, 40), 
+         text=volText, 
+         text_color=textColor, 
+         text_size=size.tiny,
+         text_halign=text.align_center,
+         text_valign=text.align_center,
+         extend=extend.right
+         )
+    array.push(bearishOBs, ob)
+
+// ==========================================
+// --- MANAGE MITIGATION (Box Removal) ---
+// ==========================================
+if array.size(bullishOBs) > 0
+    for i = array.size(bullishOBs) - 1 to 0
+        box ob = array.get(bullishOBs, i)
+        float ob_bottom = box.get_bottom(ob)
+        if close < ob_bottom
+            box.delete(ob)
+            array.remove(bullishOBs, i)
+
+if array.size(bearishOBs) > 0
+    for i = array.size(bearishOBs) - 1 to 0
+        box ob = array.get(bearishOBs, i)
+        float ob_top = box.get_top(ob)
+        if close > ob_top
+            box.delete(ob)
+            array.remove(bearishOBs, i)
