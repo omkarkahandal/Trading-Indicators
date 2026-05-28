@@ -1,24 +1,50 @@
 # Trading Indicators
 
-This repository contains custom indicators for the TradingView website, written in Pine Script version 6 (and v5). These scripts are designed to detect structural market changes, order blocks, volume footprints, and utilize astrological cycle confluences to deliver high-probability trading signals.
+Custom TradingView indicators written in Pine Script (v5 and v6) for identifying order blocks and structure-based trade zones.
 
-## Description
-It's built for the TradingView website and includes the following indicators:
+## Overview
 
-## Included Files and Their Use
+This repository contains two order-block indicators:
 
-### `Volume_OB_Detector.pine`
+1. **Volume-based detection** for highlighting stronger zones backed by volume.
+2. **Live candle-based detection** for fast, real-time structure breaks.
+
+Both scripts draw bullish and bearish order-block zones directly on chart and automatically remove zones when they are mitigated.
+
+## Included Files
+
+### `Volume_OB_Detector.pine` (Pine Script v6)
 **Volume-Based OB Detector**
-An indicator dedicated exclusively to finding high-volume Order Blocks.
-- **What it accomplishes**: It helps traders identify strong reversal zones by spotting candles that led to a Break of Structure (BOS) with above-average volume. It visually draws these zones on the chart and cleans them up once the price mitigates (closes beyond) them.
 
-### `Old indicator.pine` (formerly version4.pine)
+- Detects bullish and bearish order blocks from break-of-structure events.
+- Supports optional filters:
+  - Volume confirmation
+  - Imbalance / Fair Value Gap (FVG) confirmation
+- Labels zones with compact OB volume text.
+- Deletes zones after mitigation to keep charts clean.
+
+### `Old indicator.pine` (Pine Script v5)
 **Live Candle-Based OB Detector**
-- **What it accomplishes**: Real-time order block detection based on immediate breaks of structure on a candle-by-candle basis. It provides live visual boxes for Bullish and Bearish order blocks. Traders can optionally enable volume and Fair Value Gap (FVG) filters to increase the accuracy of the detected zones.
+
+- Detects order blocks in real time using immediate candle-by-candle structure breaks.
+- Supports optional filters:
+  - Volume confirmation
+  - Imbalance / Fair Value Gap (FVG) confirmation
+- Draws and manages bullish/bearish OB boxes with mitigation logic.
 
 ## How to Use
+
 1. Open [TradingView](https://www.tradingview.com/).
-2. Open the Pine Editor at the bottom of chart.
-3. Copy the code from the desired file in this repository and paste it into the editor.
-4. Click "Add to Chart" or "Save".
-5. Customize the settings (such as colors, filters, and lookback periods) via the indicator settings menu.
+2. Open the **Pine Editor**.
+3. Copy the script from the file you want to use.
+4. Paste it into the editor and click **Add to chart**.
+5. Open indicator settings to customize:
+   - Bullish/Bearish visibility
+   - Body vs wick zone range
+   - Filter behavior
+   - Colors and text settings
+
+## Notes
+
+- These indicators are visual and discretionary tools, not financial advice.
+- Test on paper/demo charts before using in live markets.
