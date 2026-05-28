@@ -9,7 +9,7 @@ This repository contains two order-block indicators:
 1. **Volume-based detection** for highlighting stronger zones backed by volume.
 2. **Live candle-based detection** for fast, real-time structure breaks.
 
-Both scripts draw bullish and bearish order-block zones directly on chart and automatically remove zones when they are mitigated.
+Both scripts draw bullish and bearish order-block zones directly on the chart and automatically remove zones when they are mitigated.
 
 ## Included Files
 
